@@ -19,7 +19,7 @@ function LL = horizonModelFaultsLL(hmean,hstd,hdata)
 % data they represent the likelihood of.
 
 % Likelihood of random walk step size is gaussian. 
-rwL = @(x)(1/sqrt(2*pi*rwStd^2)) * exp((-(x-rwMean).^2)/(2*rwStd.^2));
+rwL = @(x) (1/sqrt(2*pi*rwStd^2)) * exp((-(x-rwMean).^2)/(2*rwStd.^2));
 
 % Likelihood of a fault being present is a bernoulli distribution.
 % where the probability of a fault being present at all is a poisson
@@ -27,10 +27,13 @@ rwL = @(x)(1/sqrt(2*pi*rwStd^2)) * exp((-(x-rwMean).^2)/(2*rwStd.^2));
 pFault = nFault/size(hdata,1);
 
 % bernoulli pmf/likelihood
-fpL = @(x)pFault.^x * (1-pFault).^(1-x);
+fpL = @(x) pFault.^x * (1-pFault).^(1-x);
 
 % Likelihood of fault throw is zero-mean gaussian
-ftL = @(x)(1/sqrt(2*pi*ftStd^2)) * exp((-(x).^2)/(2*ftStd.^2));
+ftL = @(x) (1/sqrt(2*pi*ftStd^2)) * exp((-(x).^2)/(2*ftStd.^2));
+
+% independent joint likelihood
+jntL = @(x,y,z) rwL(x) * fpL(y) * ftL(z);
 
 % numerically integrate for each observation in the data vector hdata
 
