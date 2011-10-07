@@ -37,3 +37,11 @@ jntL = @(x,y,z) rwL(x) * fpL(y) * ftL(z);
 
 % numerically integrate for each observation in the data vector hdata
 
+% technically, this is an integral from -infinity to infinity, but it's the
+% integral of a gaussian (bell curve). 99.7% of the area under a bell curve
+% occurs falls under +/- 3 standard deviations, so we can set our limits 
+% to much more sensible values.
+
+LL = 0;
+for k = 1: length(hdata)
+    LL = LL + quad
