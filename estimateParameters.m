@@ -18,20 +18,23 @@ function Y = estimateParameters(horizonData, Y0, YLB, YUB, modelFcn)
 %
 % Y, Y0, YLB, and YUB all have the same format.
 %
-% Y is a structure containing the variables expected as inputs to the model
-% named in modelFcn. The fields of the structure HAVE TO BE IN THE EXACT
-% ORDER THAT THE INPUT PARAMETERS ARE LISTED IN THE MODEL INPUTS. If they
-% aren't, the estimation will be INCORRECT. 
+% Y0 is a structure containing the variables expected as inputs to the model
+% named in modelFcn. 
 %
-% If modelFcn = 'horizonModelNormalLL', the input parameters have to be in
-% the order "mean", "standard deviation", etc.
-
+% The order of the fields in Y doesn't matter, but it does matter that all
+% the fields are present in Y0, YLB, and YUB. The program checks for this,
+% and warns if it isn't true
 
 % Set optimizer options (only one should be uncommented)
 %Options = optimset('maxfunevals',800,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolFun',0.001); %
 %Options = optimset('maxfunevals',1000,'maxiter',700,'LevenbergMarquardt','on','display','iter','TolFun',0.001,'Jacobian','on','Diagnostics','on'); %
 Options = optimset('maxfunevals',10000,'maxiter',700,'LevenbergMarquardt','on','display','iter','TolFun',1e-15,'Jacobian','off'); %
 %Options = optimset('maxfunevals',2000,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolX',1e-10,'TolFun',1e-10); %
+
+% Sort the input structure fields
+Y0 = orderfields(Y0);
+YUB = orderfields(YUB);
+YLB = orderfields(YLB);
 
 % Convert the input structures to arrays. LSQNONLIN only understands
 % arrays
@@ -43,7 +46,16 @@ end
 
 % if lower bounds have been provided, do the same
 if ~isempty(YLB)
-    fn = fieldnames(YLB);
+    fnLB = fieldnames(YLB);
+    
+    % error checking
+    if length(fnLB) ~= length(fn)
+        error('YLB does not contain same number of fields as Y0');
+    end
+    if any(strcmp(fn,fnLB)) == 0
+        error('YLB contains fields that are different from Y0');
+    end
+        
     lowerBounds = zeros(1, length(fn));
     for i = 1:length(fn)
         lowerBounds(i) = YLB.(fn{i});
@@ -54,7 +66,16 @@ end
 
 % if upper bounds have been provided, do the same
 if ~isempty(YUB)
-    fn = fieldnames(YUB);
+    fnUB = fieldnames(YUB);
+        
+    % error checking
+    if length(fnUB) ~= length(fn)
+        error('YUB does not contain same number of fields as Y0');
+    end
+    if any(strcmp(fn,fnUB)) == 0
+        error('YUB contains fields that are different from Y0');
+    end
+    
     upperBounds = zeros(1, length(fn));
     for i = 1:length(fn)
         upperBounds(i) = YUB.(fn{i});
@@ -66,6 +87,7 @@ end
 % Pack information the model needs together for use in log likelihood function
 modelInfo.modelFcn = modelFcn;
 modelInfo.horizonData = horizonData;
+modelInfo.fnames = fn;
 
 %--------------------------
 % LEVENBURG-MARQUARDT

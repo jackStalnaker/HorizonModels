@@ -1,16 +1,29 @@
-function LL = horizonModelFaultsLL(hmean,hstd,hdata)
-%HORIZONMODELFAULTSLL returns the negative log likelihood of a mean 
-% and standard deviation given a data set
+function LL = horizonModelFaultsLL(rwMean,rwStd,nFault,ftStd,hdata)
+%HORIZONMODELFAULTSLL returns the negative log likelihood of an observed
+% list of travel time differences between traces. Each element of the
+% list of observations is described by the random variable equation 
+%
+%       Z = W + XY
+%
+% where z is the observed time difference, W is the random walk step size,
+% X is 0 if a fault is absent at this location, and 1 if it is not absent.
+% Y is the throw of the fault.
 %
 % INPUTS
 % =================
-% hmean:        Mean of random walk step size
-% hstd:         Std deviation of random walk step size
-% hdata:        Given data set
+% rwMean:       Mean of random walk step size
+% rwStd:        Std deviation of random walk step size
+% nFault:       Number of faults in horizon
+% ftStd:        Standard deviation of fault throw
+% hdata:        Given data set (list of z values)
 % 
 % OUTPUTS
 % =================
 % LL:           Negative log likelihood
+
+% To be clear, the output should be a single, scalar value. It's the
+% likelihood of the entire horizon occuring, which is created out of the
+% likelihoods of individual observations travel time differences.
 
 % NOTE: the following likelihoods are declared as anonymous functions in
 % matlab. Meaning they're all just one line functions that take an argument
@@ -19,7 +32,7 @@ function LL = horizonModelFaultsLL(hmean,hstd,hdata)
 % data they represent the likelihood of.
 
 % Likelihood of random walk step size is gaussian. 
-rwL = @(w) (1/sqrt(2*pi*rwStd^2)) * exp((-(w-rwMean).^2)/(2*rwStd.^2));
+rwL = @(w,rwMean,rwStd) (1/sqrt(2*pi*rwStd^2)) * exp((-(w-rwMean).^2)/(2*rwStd.^2));
 
 % Likelihood of a fault being present is a bernoulli distribution.
 % where the probability of a fault being present at all is a poisson
@@ -27,13 +40,42 @@ rwL = @(w) (1/sqrt(2*pi*rwStd^2)) * exp((-(w-rwMean).^2)/(2*rwStd.^2));
 pFault = nFault/size(hdata,1);
 
 % bernoulli pmf/likelihood
-fpL = @(x) pFault.^x * (1-pFault).^(1-x);
+fpL = @(x,pFault) pFault.^x * (1-pFault).^(1-x);
 
 % Likelihood of fault throw is zero-mean gaussian
-ftL = @(y) (1/sqrt(2*pi*ftStd^2)) * exp((-(y).^2)/(2*ftStd.^2));
+ftL = @(y,ftStd) (1/sqrt(2*pi*ftStd^2)) * exp((-(y).^2)/(2*ftStd.^2));
 
 % independent joint likelihood
-jntL = @(y,z) ftL(y) * (fpL(0) * rwL(z) + fpL(1)*rwL(z-y));
+jntL = @(y,z,rwMean,rwStd,pFault,ftStd) ...
+    ftL(y,ftStd) .* (fpL(0,pFault) .* ...
+    rwL(z,rwMean,rwStd) + fpL(1,pFault).*rwL(z-y,rwMean,rwStd));
 
 % numerically integrate for each observation in the data vector hdata
-zL = quad(jntL,
+% technically, this is an integral from -infinity to infinity, but it's the
+% integral of a gaussian (bell curve). 99.7% of the area under a bell curve
+% occurs falls under +/- 3 standard deviations, so we can set our limits 
+% to much more sensible values.
+
+% Also, remember that maximizing the likelihood is the same as maximizing
+% the log likelihood (because log(x) increases as x increases. Also,
+% maximizing the likelihood is the same as minimizing the negative
+% likelihood, which works better for most optimization software. Finally,
+% note that 'log' in matlab means natural log, which is typically written
+% 'ln' on paper. 'log10' is your typical base 10 logarithm.
+
+% The likelihood contains an integral of the pdf of y, which is zero mean
+% gaussian. This integral is technically from -infinity < y < infinity, but
+% because the pdf is a bell curve, we only need to go from -3*stddev  < y <
+% 3*stddev. Why? Because 99.7% of the area under a bell curve falls within
+% 3 stddevs.
+
+intlim = 3*ftStd;
+LL = 0;
+for k = 1: length(hdata)
+    z = hdata(k);
+    % we're summing up the log likelihood of all the observed data points
+    % here. Since the observations are all independent, the pdf of the
+    % whole observation vector is just the product of its terms. logging a
+    % product turns it into a sum
+    LL = LL - log(quadgk(@(y) jntL(y,z,rwMean,rwStd,pFault,ftStd),-intlim,intlim));
+end

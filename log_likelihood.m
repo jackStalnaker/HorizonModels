@@ -11,4 +11,4 @@ function LL = log_likelihood(parameters,modelInfo)
 % Output parameters
 %           LL              Log Likelihood
 
-% call the model specified with the 
+% determine which log likelihood function we should call
