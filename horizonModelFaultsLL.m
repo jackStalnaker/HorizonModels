@@ -1,4 +1,4 @@
-function LL = horizonModelFaultsLL(rwMean,rwStd,nFault,ftStd,hdata)
+function LL = horizonModelFaultsLL(hdata,nFault,rftStd,rwMean,rwStd)
 %HORIZONMODELFAULTSLL returns the negative log likelihood of an observed
 % list of travel time differences between traces. Each element of the
 % list of observations is described by the random variable equation 
@@ -11,11 +11,12 @@ function LL = horizonModelFaultsLL(rwMean,rwStd,nFault,ftStd,hdata)
 %
 % INPUTS
 % =================
+% hdata:        Given data set (list of z values)
+% nFault:       Number of faults in horizon
+% rftStd:        Standard deviation of fault throw
 % rwMean:       Mean of random walk step size
 % rwStd:        Std deviation of random walk step size
-% nFault:       Number of faults in horizon
-% ftStd:        Standard deviation of fault throw
-% hdata:        Given data set (list of z values)
+
 % 
 % OUTPUTS
 % =================
@@ -43,11 +44,11 @@ pFault = nFault/size(hdata,1);
 fpL = @(x,pFault) pFault.^x * (1-pFault).^(1-x);
 
 % Likelihood of fault throw is zero-mean gaussian
-ftL = @(y,ftStd) (1/sqrt(2*pi*ftStd^2)) * exp((-(y).^2)/(2*ftStd.^2));
+ftL = @(y,rftStd) (1/sqrt(2*pi*rftStd^2)) * exp((-(y).^2)/(2*rftStd.^2));
 
 % independent joint likelihood
-jntL = @(y,z,rwMean,rwStd,pFault,ftStd) ...
-    ftL(y,ftStd) .* (fpL(0,pFault) .* ...
+jntL = @(y,z,rwMean,rwStd,pFault,rftStd) ...
+    ftL(y,rftStd) .* (fpL(0,pFault) .* ...
     rwL(z,rwMean,rwStd) + fpL(1,pFault).*rwL(z-y,rwMean,rwStd));
 
 % numerically integrate for each observation in the data vector hdata
@@ -69,7 +70,7 @@ jntL = @(y,z,rwMean,rwStd,pFault,ftStd) ...
 % 3*stddev. Why? Because 99.7% of the area under a bell curve falls within
 % 3 stddevs.
 
-intlim = 3*ftStd;
+intlim = 3*rftStd;
 LL = 0;
 for k = 1: length(hdata)
     z = hdata(k);
@@ -77,5 +78,5 @@ for k = 1: length(hdata)
     % here. Since the observations are all independent, the pdf of the
     % whole observation vector is just the product of its terms. logging a
     % product turns it into a sum
-    LL = LL - log(quadgk(@(y) jntL(y,z,rwMean,rwStd,pFault,ftStd),-intlim,intlim));
+    LL = LL - log(quadgk(@(y) jntL(y,z,rwMean,rwStd,pFault,rftStd),-intlim,intlim));
 end

@@ -12,3 +12,16 @@ function LL = log_likelihood(parameters,modelInfo)
 %           LL              Log Likelihood
 
 % determine which log likelihood function we should call
+modelInfo.modelFcn = modelFcn;
+modelInfo.horizonData = horizonData;
+modelInfo.fnames = fn;
+
+if strcmpi(modelInfo.modelFcn,'horizonModelNormalLL')
+    LL = horizonModelNormalLL(diff(model.horizonData),parameters(1),parameters(2));
+elseif strcmpi(modelInfo.modelFcn,'horizonModelFaultsLL')
+    LL = horizonModelFaultsLL(diff(model.horizonData),parameters(1),parameters(2),...
+                              parameters(3),parameters(4));
+elseif strcmpi(modelInfo.modelFcn,'altHorizonModelFaultsLL')
+    LL = altHorizonModelFaultsLL(model.horizonData,parameters(1),parameters(2),...
+                              parameters(3),parameters(4),parameters(5));
+end

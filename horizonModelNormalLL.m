@@ -1,4 +1,4 @@
-function LL = horizonModelNormalLL(rwMean,rwStd,hdata)
+function LL = horizonModelNormalLL(hdata,rwMean,rwStd)
 %HORIZONMODELNORMALLL returns the negative log likelihood of an observed
 % list of travel time differences between traces. Each element of the
 % list of observations is described by the random variable equation 
@@ -10,8 +10,9 @@ function LL = horizonModelNormalLL(rwMean,rwStd,hdata)
 % INPUTS
 % =================
 % rwMean:       Mean of random walk step size
-% rwStd:        Std deviation of random walk step size
 % hdata:        Given data set
+% rwStd:        Std deviation of random walk step size
+%
 % 
 % OUTPUTS
 % =================

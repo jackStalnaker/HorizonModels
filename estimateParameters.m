@@ -104,4 +104,4 @@ for i = 1:length(fn)
     % Display on screen
     fprintf('Estimated %s:\t\t%5.3f\n', fn{i}, LMResult(i));
 end
-fprintf('Best fit residual norm:\t\t%5.3f\n', ResNorm);
+fprintf('Best fit residual norm:\t\t%5.3f\n', LLNorm);
