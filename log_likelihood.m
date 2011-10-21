@@ -24,4 +24,6 @@ elseif strcmpi(modelInfo.modelFcn,'horizonModelFaultsLL')
 elseif strcmpi(modelInfo.modelFcn,'altHorizonModelFaultsLL')
     LL = altHorizonModelFaultsLL(model.horizonData,parameters(1),parameters(2),...
                               parameters(3),parameters(4),parameters(5));
+else
+    error('Model name %s not recognized in loglikelihood.m', modelInfo.modelFcn);
 end
