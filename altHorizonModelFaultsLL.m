@@ -90,5 +90,5 @@ for k = 1: length(hdata)
     % here. Since the observations are all independent, the pdf of the
     % whole observation vector is just the product of its terms. logging a
     % product turns it into a sum
-    LL = LL - log(quad(@(y) jntL(y,z,wnMean,wnStd,pFault,rftStd),-intlim,intlim));
+    LL = LL - log(quadgk(@(y) jntL(y,z,wnMean,wnStd,pFault,rftStd),-intlim,intlim));
 end
