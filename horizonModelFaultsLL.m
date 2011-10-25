@@ -41,7 +41,7 @@ rwL = @(w,rwMean,rwStd) (1/sqrt(2*pi*rwStd^2)) * exp((-(w-rwMean).^2)/(2*rwStd.^
 pFault = nFault/size(hdata,1);
 
 % bernoulli pmf/likelihood
-fpL = @(x,pFault) pFault.^x * (1-pFault).^(1-x);
+fpL = @(x,pFault) pFault.^x .* (1-pFault).^(1-x);
 
 % Likelihood of fault throw is zero-mean gaussian
 ftL = @(y,rftStd) (1/sqrt(2*pi*rftStd^2)) * exp((-(y).^2)/(2*rftStd.^2));
