@@ -28,7 +28,7 @@ function Y = estimateParameters(horizonData, Y0, YLB, YUB, modelFcn)
 % Set optimizer options (only one should be uncommented)
 %Options = optimset('maxfunevals',800,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolFun',0.001); %
 %Options = optimset('maxfunevals',1000,'maxiter',700,'LevenbergMarquardt','on','display','iter','TolFun',0.001,'Jacobian','on','Diagnostics','on'); %
-Options = optimset('maxfunevals',10000,'maxiter',700,'display','iter','TolFun',1e-15); %
+Options = optimset('maxfunevals',1000000,'maxiter',700,'display','iter','TolFun',1e-15); %
 %Options = optimset('maxfunevals',2000,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolX',1e-10,'TolFun',1e-10); %
 
 % Sort the input structure fields
@@ -93,7 +93,7 @@ modelInfo.fnames = fn;
 % Minimization
 %--------------------------
 %[estimate,LLNorm,~,~] = lsqnonlin('log_likelihood',initialGuess,lowerBounds,upperBounds,Options,modelInfo);
-[estimate,minVal] = fminsearch(@(parameters) log_likelihood(parameters, modelInfo), initialGuess);
+[estimate,minVal] = fminsearch(@(parameters) log_likelihood(parameters, modelInfo), initialGuess,Options);
 
 % get rid of meaningless negative values (quirk of the way fminsearch
 % works)
