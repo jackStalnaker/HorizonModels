@@ -11,6 +11,9 @@ function LL = log_likelihood(parameters,modelInfo)
 % Output parameters
 %           LL              Log Likelihood
 
+% Fminsearch doesn't do bounds, so let's prevent zero parameter values
+parameters = abs(parameters);
+
 % determine which log likelihood function we should call
 if strcmpi(modelInfo.modelFcn,'horizonModelNormalLL')
     LL = horizonModelNormalLL(diff(modelInfo.horizonData),parameters(1),parameters(2));

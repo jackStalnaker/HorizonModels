@@ -28,13 +28,11 @@ function Y = estimateParameters(horizonData, Y0, YLB, YUB, modelFcn)
 % Set optimizer options (only one should be uncommented)
 %Options = optimset('maxfunevals',800,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolFun',0.001); %
 %Options = optimset('maxfunevals',1000,'maxiter',700,'LevenbergMarquardt','on','display','iter','TolFun',0.001,'Jacobian','on','Diagnostics','on'); %
-Options = optimset('maxfunevals',10000,'maxiter',700,'LevenbergMarquardt','on','display','iter','TolFun',1e-15,'Jacobian','off'); %
+Options = optimset('maxfunevals',10000,'maxiter',700,'display','iter','TolFun',1e-15); %
 %Options = optimset('maxfunevals',2000,'maxiter',500,'LevenbergMarquardt','on','display','iter','TolX',1e-10,'TolFun',1e-10); %
 
 % Sort the input structure fields
 Y0 = orderfields(Y0);
-YUB = orderfields(YUB);
-YLB = orderfields(YLB);
 
 % Convert the input structures to arrays. LSQNONLIN only understands
 % arrays
@@ -46,6 +44,7 @@ end
 
 % if lower bounds have been provided, do the same
 if ~isempty(YLB)
+    YLB = orderfields(YLB);
     fnLB = fieldnames(YLB);
     
     % error checking
@@ -66,6 +65,7 @@ end
 
 % if upper bounds have been provided, do the same
 if ~isempty(YUB)
+    YUB = orderfields(YUB);
     fnUB = fieldnames(YUB);
         
     % error checking
@@ -90,18 +90,22 @@ modelInfo.horizonData = horizonData;
 modelInfo.fnames = fn;
 
 %--------------------------
-% LEVENBURG-MARQUARDT
+% Minimization
 %--------------------------
-[estimate,LLNorm,~,~] = lsqnonlin('log_likelihood',initialGuess,lowerBounds,upperBounds,Options,modelInfo);
+%[estimate,LLNorm,~,~] = lsqnonlin('log_likelihood',initialGuess,lowerBounds,upperBounds,Options,modelInfo);
+[estimate,minVal] = fminsearch(@(parameters) log_likelihood(parameters, modelInfo), initialGuess);
+
+% get rid of meaningless negative values (quirk of the way fminsearch
+% works)
+estimate = abs(estimate);
 
 % Convert the arrays back to structures for output.
-
 Y = Y0;
 fn = fieldnames(Y0);
 for i = 1:length(fn)
     Y.(fn{i}) = estimate(i);
     
     % Display on screen
-    fprintf('Estimated %s:\t\t%5.3f\n', fn{i}, LMResult(i));
+    fprintf('Estimated %s:\t\t%5.3f\n', fn{i}, estimate(i));
 end
-fprintf('Best fit residual norm:\t\t%5.3f\n', LLNorm);
+fprintf('Minumum of objective func:\t\t%5.3f\n', minVal);
