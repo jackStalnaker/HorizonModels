@@ -1,0 +1,2 @@
+Utilities for modeling a 2D seismic horizon as a random walk with fault jumps,
+and for estimating those parameters from a picked horizon. 
